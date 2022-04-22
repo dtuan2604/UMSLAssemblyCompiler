@@ -28,7 +28,8 @@ void newName(int type, char* returnName){
 int isAbletoGencode(struct node_t *nodePtr){
 	if(strcmp(nodePtr->name,"program") == 0 || strcmp(nodePtr->name,"block") == 0 ||
 		strcmp(nodePtr->name,"stats") == 0 || strcmp(nodePtr->name,"stat") == 0 ||
-		strcmp(nodePtr->name,"RO") == 0 || strcmp(nodePtr->name,"general loop") == 0)
+		strcmp(nodePtr->name,"RO") == 0 || strcmp(nodePtr->name,"general loop") == 0 ||
+		strcmp(nodePtr->name,"N") == 0 || strcmp(nodePtr->name,"mStat") == 0)
 		return 0;
 	return 1;
 	
@@ -40,7 +41,76 @@ void codeGen(struct node_t *nodePtr){
 		return;
 	
 	if(strcmp(nodePtr->name,"expr") == 0){
+		fprintf(outptr,"LOAD 0\n"); //Reset the ACC
+		semanticCheck(nodePtr->left);		
+		if(nodePtr->right != NULL){
+			newName(VAR,argR);
+			fprintf(outptr,"STORE %s\n",argR);
+			semanticCheck(nodePtr->right);
+			fprintf(outptr,"MULT -1\n");
+			fprintf(outptr,"ADD %s\n",argR);
+		}
+	}else if(strcmp(nodePtr->name,"N'") == 0 && nodePtr->numToken > 0){
+		char argR2[20];
+		newName(VAR,argR);
+		fprintf(outptr,"STORE %s\n",argR);
+		semanticCheck(nodePtr->left);
+			
+		newName(VAR,argR2);
+		fprintf(outptr,"STORE %s\n",argR2);
+		fprintf(outptr,"LOAD %s\n",argR);
 		
+		if(strcmp(nodePtr->tokenList[0]->tokenIns,"/") == 0)
+			fprintf(outptr,"DIV %s\n",argR2);
+		else
+			fprintf(outptr,"ADD %s\n",argR2);
+		
+		semanticCheck(nodePtr->right);
+	}else if(strcmp(nodePtr->name,"A") == 0){
+		semanticCheck(nodePtr->left);
+		if(nodePtr->right != NULL){
+			char argR2[20];
+			newName(VAR, argR);
+			fprintf(outptr,"STORE %s\n",argR);
+			semanticCheck(nodePtr->right);
+			
+			newName(VAR,argR2);
+			fprintf(outptr,"STORE %s\n",argR2);
+			fprintf(outptr,"LOAD %s\n",argR);
+			fprintf(outptr,"MULT %s\n",argR2);
+		}		
+
+	}else if(strcmp(nodePtr->name,"M") == 0){
+		semanticCheck(nodePtr->middle);
+		if(nodePtr->numToken > 0){
+			newName(VAR,argR);
+			fprintf(outptr,"STORE %s\n",argR);
+			fprintf(outptr,"LOAD 0\n");
+			fprintf(outptr,"SUB %s\n",argR);
+		}
+	}else if(strcmp(nodePtr->name,"R") == 0){
+		int id;
+		switch(nodePtr->tokenList[0]->tokenID){
+			case OPERATOR:	semanticCheck(nodePtr->middle);
+					break;
+			case IDENT:	id = find(nodePtr->tokenList[0]);
+					fprintf(outptr,"STACKR %d\n",id);
+					break;
+			case NUMBER:	fprintf(outptr,"LOAD %s\n",nodePtr->tokenList[0]->tokenIns);
+					break;
+		}
+		/*if(nodePtr->tokenList[0]->tokenID == OPERATOR)
+			semanticCheck(nodePtr->middle);
+		else if(nodePtr->tokenList[{
+			
+		}*/
+
+	}else if(strcmp(nodePtr->name,"out") == 0){
+		semanticCheck(nodePtr->middle);
+		
+		newName(VAR,argR);
+		fprintf(outptr,"STORE %s\n",argR);
+		fprintf(outptr,"WRITE %s\n",argR);
 	}
 }
 
@@ -149,6 +219,14 @@ void semanticCheck(struct node_t* nodePtr){
 				fprintf(outptr,"POP\n");
                 	}
 			curIndex--;
+		}
+		
+		if(strcmp(nodePtr->name,"program") == 0){
+			int i; 
+			fprintf(outptr,"STOP\n");
+			for(i = 0; i < tempvarCount; i++){
+				fprintf(outptr,"T%d 0\n",i);
+			}
 		}
         }
 
