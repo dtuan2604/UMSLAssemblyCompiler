@@ -19,7 +19,6 @@ void clearMem(){
 	destroyStack();
 	destroyROOT();
 }
-
 int main(int argc, char** argv)
 {
 	strcpy(prog,argv[0]);

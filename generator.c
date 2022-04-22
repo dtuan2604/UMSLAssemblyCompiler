@@ -8,7 +8,41 @@
 int* varCount = NULL;
 int curIndex;
 char* gen = "generator";
+char tempName[20];
+
 extern char* fileName;
+extern FILE * outptr;
+
+int labelCount = 0; //counting unique label 
+int tempvarCount = 0;
+
+void newName(int type, char* returnName){
+	if(type == VAR)
+		sprintf(tempName,"T%d",tempvarCount++); /* generate a new label as T0, T1, etc */
+  	else // creating new Label
+    		sprintf(tempName,"L%d",labelCount++); /* new lables as L0, L1, etc */
+	strcpy(returnName, tempName);
+	return;
+}
+
+int isAbletoGencode(struct node_t *nodePtr){
+	if(strcmp(nodePtr->name,"program") == 0 || strcmp(nodePtr->name,"block") == 0 ||
+		strcmp(nodePtr->name,"stats") == 0 || strcmp(nodePtr->name,"stat") == 0 ||
+		strcmp(nodePtr->name,"RO") == 0 || strcmp(nodePtr->name,"general loop") == 0)
+		return 0;
+	return 1;
+	
+}
+
+void codeGen(struct node_t *nodePtr){
+	char label[20], argR[20];
+	if(nodePtr == NULL)
+		return;
+	
+	if(strcmp(nodePtr->name,"expr") == 0){
+		
+	}
+}
 
 int isOverflow(){
 	return curIndex >= MAX_BLOCKS ? 1 : 0;
@@ -75,6 +109,7 @@ void semanticCheck(struct node_t* nodePtr){
 			
 			push(curToken);
 			varCount[curIndex]++;
+			fprintf(outptr,"PUSH\n");
 		}else{
 			//process non-vars node
 			if(nodePtr->numToken > 0){
@@ -98,15 +133,20 @@ void semanticCheck(struct node_t* nodePtr){
 				}
 			}	
 		}
-
-                semanticCheck(nodePtr->left);
-                semanticCheck(nodePtr->middle);
-                semanticCheck(nodePtr->right);
+		
+		if(isAbletoGencode(nodePtr) == 1)
+			codeGen(nodePtr);
+		else{
+                	semanticCheck(nodePtr->left);
+                	semanticCheck(nodePtr->middle);
+                	semanticCheck(nodePtr->right);
+		}
 		
 		if(isBlock == 1){
 			while(varCount[curIndex] > 0){
 				pop();
                         	varCount[curIndex]--;
+				fprintf(outptr,"POP\n");
                 	}
 			curIndex--;
 		}
