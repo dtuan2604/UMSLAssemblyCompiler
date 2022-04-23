@@ -448,16 +448,27 @@ struct node_t * expr()
 	tempNode->left = N();
 
 	scanner();
-	if(matching(OPERATOR,"-") == 1){
-		copyToken(&tempNode);
-
-		scanner();
-		tempNode->right = expr();
-	}else{
-		epsilon_flag = 1;
-	}
+	tempNode->right = expr_();
 	
 	return tempNode;
+}
+struct node_t * expr_()
+{
+	struct node_t * tempNode = createNode("expr'");
+
+	if(matching(OPERATOR,"-") == 1){
+                copyToken(&tempNode);
+
+                scanner();
+                tempNode->left = N();
+		
+		scanner();
+		tempNode->right = expr_();
+        }else{
+                epsilon_flag = 1;
+        }
+
+        return tempNode;	
 }
 struct node_t * N()
 {

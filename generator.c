@@ -29,7 +29,8 @@ int isAbletoGencode(struct node_t *nodePtr){
 	if(strcmp(nodePtr->name,"program") == 0 || strcmp(nodePtr->name,"block") == 0 ||
 		strcmp(nodePtr->name,"stats") == 0 || strcmp(nodePtr->name,"stat") == 0 ||
 		strcmp(nodePtr->name,"RO") == 0 || strcmp(nodePtr->name,"general loop") == 0 ||
-		strcmp(nodePtr->name,"N") == 0 || strcmp(nodePtr->name,"mStat") == 0)
+		strcmp(nodePtr->name,"N") == 0 || strcmp(nodePtr->name,"mStat") == 0 ||
+		strcmp(nodePtr->name,"expr") == 0)
 		return 0;
 	return 1;
 	
@@ -40,16 +41,14 @@ void codeGen(struct node_t *nodePtr){
 	if(nodePtr == NULL)
 		return;
 	
-	if(strcmp(nodePtr->name,"expr") == 0){
-		fprintf(outptr,"LOAD 0\n"); //Reset the ACC
+	if(strcmp(nodePtr->name,"expr'") == 0 && nodePtr->left != NULL){
+		newName(VAR, argR);
+		fprintf(outptr,"STORE %s\n",argR); 
 		semanticCheck(nodePtr->left);		
-		if(nodePtr->right != NULL){
-			newName(VAR,argR);
-			fprintf(outptr,"STORE %s\n",argR);
-			semanticCheck(nodePtr->right);
-			fprintf(outptr,"MULT -1\n");
-			fprintf(outptr,"ADD %s\n",argR);
-		}
+	
+		fprintf(outptr,"MULT -1\n");
+		fprintf(outptr,"ADD %s\n",argR);
+		semanticCheck(nodePtr->right);
 	}else if(strcmp(nodePtr->name,"N'") == 0 && nodePtr->numToken > 0){
 		char argR2[20];
 		newName(VAR,argR);
@@ -99,11 +98,6 @@ void codeGen(struct node_t *nodePtr){
 			case NUMBER:	fprintf(outptr,"LOAD %s\n",nodePtr->tokenList[0]->tokenIns);
 					break;
 		}
-		/*if(nodePtr->tokenList[0]->tokenID == OPERATOR)
-			semanticCheck(nodePtr->middle);
-		else if(nodePtr->tokenList[{
-			
-		}*/
 
 	}else if(strcmp(nodePtr->name,"out") == 0){
 		semanticCheck(nodePtr->middle);
@@ -111,6 +105,82 @@ void codeGen(struct node_t *nodePtr){
 		newName(VAR,argR);
 		fprintf(outptr,"STORE %s\n",argR);
 		fprintf(outptr,"WRITE %s\n",argR);
+
+	}else if(strcmp(nodePtr->name,"in") == 0){
+		//The second token in the list is IDENT
+		int index = find(nodePtr->tokenList[1]);
+		newName(VAR,argR);
+		fprintf(outptr,"READ %s\n",argR);
+		fprintf(outptr,"LOAD %s\n",argR);
+		fprintf(outptr,"STACKW %d\n",index);
+
+	}else if(strcmp(nodePtr->name,"assign") == 0){
+		//The second token in the list is IDENT
+		int index = find(nodePtr->tokenList[1]);
+		semanticCheck(nodePtr->middle);
+		fprintf(outptr,"STACKW %d\n",index);	
+
+	}else if(strcmp(nodePtr->name,"label") == 0){
+		//The second token in the list is IDENT
+		fprintf(outptr,"%s: NOOP\n",nodePtr->tokenList[1]->tokenIns);
+
+	}else if(strcmp(nodePtr->name,"goto") == 0){
+		fprintf(outptr,"BR %s\n",nodePtr->tokenList[1]->tokenIns);
+
+	}else if(strcmp(nodePtr->name,"condition") == 0){
+		char argR2[20],label2[20],label3[20];
+		semanticCheck(nodePtr->left);
+		newName(VAR,argR);
+		fprintf(outptr,"STORE %s\n",argR);
+		
+		
+		semanticCheck(nodePtr->right);
+		if(strcmp(nodePtr->middle->tokenList[0]->tokenIns,".") == 0){
+			newName(LABEL, label);
+			fprintf(outptr,"BRZERO %s\n",label); //if the second expression is zero, branch to label
+			newName(VAR, argR2);
+			fprintf(outptr,"STORE %s\n",argR2);
+			fprintf(outptr,"LOAD %s\n",argR);
+			newName(LABEL, label2);
+			fprintf(outptr,"BRZERO %s\n",label2); //if the first expression is zero, branch to label
+			
+			//if two expression are not zero
+			fprintf(outptr,"MULT %s\n",argR2);
+			newName(LABEL,label3);
+			fprintf(outptr,"BR %s\n",label3);
+
+			fprintf(outptr,"%s: LOAD %s\n",label,argR); //load the first expression to check if it is positive
+			fprintf(outptr,"BRZPOS %s\n",label3);
+
+			fprintf(outptr,"%s: LOAD %s\n",label2, argR2); //load the second expression to check if it is positive
+			fprintf(outptr,"BRZPOS %s\n",label3);
+	
+			fprintf(outptr,"LOAD -1\n");//last cases if one of the expression is zero and the other one is negative;
+
+			fprintf(outptr,"%s: NOOP\n",label3);
+		}else{
+			fprintf(outptr,"SUB %s\n",argR);
+		}
+	}else if(strcmp(nodePtr->name,"if") == 0){
+		semanticCheck(nodePtr->left);
+		
+		newName(LABEL, label);
+	
+		if(strcmp(nodePtr->left->middle->tokenList[0]->tokenIns,".") == 0){
+			fprintf(outptr,"BRZPOS %s\n",label);		
+		}else{
+			if(strcmp(nodePtr->left->middle->tokenList[0]->tokenIns,">=") == 0)
+				fprintf(outptr,"BRPOS %s\n",label);
+			else if(strcmp(nodePtr->left->middle->tokenList[0]->tokenIns,"<=") == 0)
+				fprintf(outptr,"BRNEG %s\n",label);
+			else if(strcmp(nodePtr->left->middle->tokenList[0]->tokenIns,"==") == 0){
+				fprintf(outptr,"BRPOS %s\n",label);
+				fprintf(outptr,"BRNEG %s\n",label);
+			}else
+				fprintf(outptr,"BRZERO %s\n",label);
+		}
+		semanticCheck(nodePtr->right);
+		fprintf(outptr,"%s: NOOP\n",label);
 	}
 }
 

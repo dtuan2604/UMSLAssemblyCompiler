@@ -34,6 +34,7 @@ struct node_t * condition(); //extra non-terminal
 struct node_t * RO();
 
 struct node_t * expr();
+struct node_t * expr_();
 struct node_t * N();
 struct node_t * N_();
 struct node_t * A();
