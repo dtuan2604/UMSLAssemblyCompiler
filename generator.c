@@ -151,18 +151,21 @@ void codeGen(struct node_t *nodePtr){
 
 			fprintf(outptr,"%s: LOAD %s\n",label,argR); //load the first expression to check if it is positive
 			fprintf(outptr,"BRZPOS %s\n",label3);
+			
+			newName(LABEL,label);
+			fprintf(outptr,"BR %s\n",label);
 
 			fprintf(outptr,"%s: LOAD %s\n",label2, argR2); //load the second expression to check if it is positive
 			fprintf(outptr,"BRZPOS %s\n",label3);
 	
-			fprintf(outptr,"LOAD -1\n");//last cases if one of the expression is zero and the other one is negative;
+			fprintf(outptr,"%s: LOAD -1\n",label);//last cases if one of the expression is zero and the other one is negative;
 
 			fprintf(outptr,"%s: NOOP\n",label3);
 		}else{
 			fprintf(outptr,"SUB %s\n",argR);
 		}
 	}else if(strcmp(nodePtr->name,"if") == 0){
-		semanticCheck(nodePtr->left);
+		semanticCheck(nodePtr->left); //process condition
 		
 		newName(LABEL, label);
 	
@@ -181,9 +184,16 @@ void codeGen(struct node_t *nodePtr){
 		}
 		semanticCheck(nodePtr->right);
 		fprintf(outptr,"%s: NOOP\n",label);
+	}else if(strcmp(nodePtr->name,"loop1") == 0){
+		char label[20];
+		newName(LABEL, label);
+		fprintf(outptr,"%s: NOOP\n", label);
+		semanticCheck(nodePtr->left); //process <condition>
+
+		
+
 	}
 }
-
 int isOverflow(){
 	return curIndex >= MAX_BLOCKS ? 1 : 0;
 }

@@ -14,5 +14,4 @@ void initVarcount();
 void destroyVarcount();
 void semanticCheck(struct node_t* nodePtr);
 
-
 #endif
