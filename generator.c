@@ -11,6 +11,7 @@ char* gen = "generator";
 char tempName[20];
 
 extern char* fileName;
+extern char* outfile;
 extern FILE * outptr;
 
 int labelCount = 0; //counting unique label 
@@ -30,7 +31,7 @@ int isAbletoGencode(struct node_t *nodePtr){
 		strcmp(nodePtr->name,"stats") == 0 || strcmp(nodePtr->name,"stat") == 0 ||
 		strcmp(nodePtr->name,"RO") == 0 || strcmp(nodePtr->name,"general loop") == 0 ||
 		strcmp(nodePtr->name,"N") == 0 || strcmp(nodePtr->name,"mStat") == 0 ||
-		strcmp(nodePtr->name,"expr") == 0)
+		strcmp(nodePtr->name,"expr") == 0 || strcmp(nodePtr->name,"vars") == 0)
 		return 0;
 	return 1;
 	
@@ -185,13 +186,51 @@ void codeGen(struct node_t *nodePtr){
 		semanticCheck(nodePtr->right);
 		fprintf(outptr,"%s: NOOP\n",label);
 	}else if(strcmp(nodePtr->name,"loop1") == 0){
-		char label[20];
-		newName(LABEL, label);
-		fprintf(outptr,"%s: NOOP\n", label);
+		char label2[20];
+		newName(LABEL, label2);
+		fprintf(outptr,"%s: NOOP\n", label2);
 		semanticCheck(nodePtr->left); //process <condition>
 
-		
+		newName(LABEL, label);
 
+                if(strcmp(nodePtr->left->middle->tokenList[0]->tokenIns,".") == 0){
+                        fprintf(outptr,"BRZPOS %s\n",label);
+                }else{
+                        if(strcmp(nodePtr->left->middle->tokenList[0]->tokenIns,">=") == 0)
+                                fprintf(outptr,"BRPOS %s\n",label);
+                        else if(strcmp(nodePtr->left->middle->tokenList[0]->tokenIns,"<=") == 0)
+                                fprintf(outptr,"BRNEG %s\n",label);
+                        else if(strcmp(nodePtr->left->middle->tokenList[0]->tokenIns,"==") == 0){
+                                fprintf(outptr,"BRPOS %s\n",label);
+                                fprintf(outptr,"BRNEG %s\n",label);
+                        }else
+                                fprintf(outptr,"BRZERO %s\n",label);
+                }
+                semanticCheck(nodePtr->right);
+
+		fprintf(outptr,"BR %s\n",label2);
+                fprintf(outptr,"%s: NOOP\n",label);
+
+	}else if(strcmp(nodePtr->name,"loop2") == 0){
+		newName(LABEL, label);
+		fprintf(outptr,"%s: NOOP\n",label);
+	
+		semanticCheck(nodePtr->left);
+		
+		semanticCheck(nodePtr->right); //process <condition>
+		if(strcmp(nodePtr->right->middle->tokenList[0]->tokenIns,".") == 0){
+                        fprintf(outptr,"BRNEG %s\n",label);
+                }else{
+                        if(strcmp(nodePtr->right->middle->tokenList[0]->tokenIns,">=") == 0)
+                                fprintf(outptr,"BRZNEG %s\n",label);
+                        else if(strcmp(nodePtr->right->middle->tokenList[0]->tokenIns,"<=") == 0)
+                                fprintf(outptr,"BRZPOS %s\n",label);
+                        else if(strcmp(nodePtr->right->middle->tokenList[0]->tokenIns,"!=") == 0){
+                                fprintf(outptr,"BRPOS %s\n",label);
+                                fprintf(outptr,"BRNEG %s\n",label);
+                        }else
+                                fprintf(outptr,"BRZERO %s\n",label);
+                }
 	}
 }
 int isOverflow(){
@@ -254,6 +293,7 @@ void semanticCheck(struct node_t* nodePtr){
 				printf("(previously defined at %s:%d:%d)\n", fileName, predefToken->line, predefToken->charN);
 				printReset();
 				free(predefToken);
+				remove(outfile);
 				exit(-1);
 			}
 			
@@ -275,6 +315,7 @@ void semanticCheck(struct node_t* nodePtr){
                                 			printYellow();
 							printf("'%s' has not been defined in this scope\n",tkList[i]->tokenIns);
 							printReset();
+							remove(outfile);
 							exit(-1);
 						}
 

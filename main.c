@@ -9,8 +9,8 @@
 #define BUFF 200
 
 char prog[BUFF];
-char outfile[BUFF];
-char* fileName;
+char* outfile = NULL;
+char* fileName = NULL;
 FILE * outptr = NULL;
 
 void clearMem(){
@@ -23,6 +23,8 @@ int main(int argc, char** argv)
 {
 	strcpy(prog,argv[0]);
 	fileName = (char *)malloc(BUFF);
+	outfile = (char *)malloc(BUFF);
+
 	if(fileName == NULL)
 	{
                 fprintf(stderr,"ERROR: %s: failed to allocate memory for filename\n",prog);
@@ -92,7 +94,10 @@ int main(int argc, char** argv)
 	fclose(outptr);
 	
 	free(fileName);
-	fileName = NULL;
+        fileName = NULL;
+        free(outfile);
+        outfile = NULL;
+
 	return EXIT_SUCCESS;		
 }
 

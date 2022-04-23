@@ -222,8 +222,8 @@ struct node_t * stat()
 	
 	scanner();
 	if(block_flag == 0){
-		if(matching(OPERATOR,";") == 0)  
-                        printParserError("Expected ';' before '%s' token\n",nextTok->tokenIns);	
+		if(matching(OPERATOR,";") == 0)
+			printParserError("Expected ';' before '%s' token\n",nextTok->tokenIns);	
 		copyToken(&tempNode);
 	}else
 		epsilon_flag = 1; //assuming after <block> terminal is an epsilon character
