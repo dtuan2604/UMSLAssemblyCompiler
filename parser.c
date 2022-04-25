@@ -221,7 +221,8 @@ struct node_t * stat()
 		printParserError("Expected a statement, but received '%s' token\n", nextTok->tokenIns);
 	
 	scanner();
-	if(block_flag == 0){
+	if(block_flag == 0)
+	{
 		if(matching(OPERATOR,";") == 0)
 			printParserError("Expected ';' before '%s' token\n",nextTok->tokenIns);	
 		copyToken(&tempNode);

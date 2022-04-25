@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 	semanticCheck(root);
 	
 	
-	printf("SUCCESSFULLY COMPILE THE PROGRAM!\n");
+	printf("SUCCESSFULLY COMPILE THE PROGRAM! The target file is: %s\n",outfile);
 	fclose(outptr);
 	
 	free(fileName);
