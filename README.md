@@ -1,5 +1,5 @@
 # Project 4: The Compiler
-**Name**: ::tabs Duong Tuan Hoang<br>
+**Name**:		Duong Tuan Hoang<br>
 **Section**: 	CMPSCI 4280 - Program Translation Project<br>
 **VCS**:		git<br>
 **Date**:		04/25/2022<br>
